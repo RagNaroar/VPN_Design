@@ -2,4 +2,4 @@
 
 ## Скриншот
 
-![Главный экран](images/screenshot.png)
+![Главный экран](images/screen.png)
