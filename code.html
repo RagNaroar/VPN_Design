@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="ru"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CRYPT_VPN // ENCRYPTED_STREAMS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@400;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=JetBrains+Mono:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-primary-container": "#006970",
+                "on-tertiary-container": "#7213ff",
+                "secondary-container": "#ff506e",
+                "primary-fixed-dim": "#00dbe9",
+                "inverse-primary": "#006970",
+                "surface": "#131316",
+                "surface-container": "#201f22",
+                "primary": "#dbfcff",
+                "primary-container": "#00f0ff",
+                "error": "#ffb4ab",
+                "inverse-surface": "#e5e1e5",
+                "secondary-fixed-dim": "#ffb2b8",
+                "surface-tint": "#00dbe9",
+                "on-secondary": "#67001d",
+                "primary-fixed": "#7df4ff",
+                "error-container": "#93000a",
+                "tertiary": "#faf3ff",
+                "on-error": "#690005",
+                "tertiary-fixed-dim": "#d1bcff",
+                "secondary-fixed": "#ffdadb",
+                "on-surface-variant": "#b9cacb",
+                "on-tertiary-fixed-variant": "#5700c9",
+                "surface-container-high": "#2a2a2d",
+                "on-primary": "#00363a",
+                "inverse-on-surface": "#313033",
+                "tertiary-container": "#e1d2ff",
+                "on-secondary-container": "#5b0018",
+                "on-surface": "#e5e1e5",
+                "surface-bright": "#39393c",
+                "outline": "#849495",
+                "secondary": "#ffb2b8",
+                "surface-dim": "#131316",
+                "on-tertiary": "#3c0090",
+                "outline-variant": "#3b494b",
+                "on-primary-fixed-variant": "#004f54",
+                "on-secondary-fixed": "#40000f",
+                "on-tertiary-fixed": "#23005b",
+                "surface-container-low": "#1c1b1e",
+                "on-primary-fixed": "#002022",
+                "background": "#131316",
+                "on-background": "#e5e1e5",
+                "surface-container-highest": "#353438",
+                "surface-variant": "#353438",
+                "surface-container-lowest": "#0e0e11",
+                "on-secondary-fixed-variant": "#91002d",
+                "on-error-container": "#ffdad6",
+                "tertiary-fixed": "#e9ddff"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+            },
+            "spacing": {
+                "gutter": "16px",
+                "margin-mobile": "20px",
+                "margin-desktop": "40px",
+                "unit": "4px",
+                "container-max-width": "1200px"
+            },
+            "fontFamily": {
+                "headline-lg": ["Inter"],
+                "label-caps": ["JetBrains Mono"],
+                "body-lg": ["JetBrains Mono"],
+                "headline-md": ["Inter"],
+                "headline-lg-mobile": ["Inter"],
+                "body-sm": ["JetBrains Mono"]
+            },
+            "fontSize": {
+                "headline-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                "headline-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body {
+            cursor: none;
+            background-color: #0e0e11;
+            overflow-x: hidden;
+        }
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00dbe9;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.15s ease-out, width 0.3s, height 0.3s;
+            mix-blend-mode: difference;
+        }
+        .custom-cursor.expand {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 219, 233, 0.2);
+        }
+        .glass-panel {
+            background: rgba(19, 19, 22, 0.4);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(185, 202, 203, 0.1);
+        }
+        .scan-line {
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00dbe9, transparent);
+            position: absolute;
+            top: 0;
+            animation: scan 3s linear infinite;
+            opacity: 0.5;
+        }
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+        .glitch-text {
+            position: relative;
+            text-shadow: 0.05em 0 0 rgba(255, 80, 110, 0.75), -0.025em -0.05em 0 rgba(0, 219, 233, 0.75);
+            animation: glitch 1s infinite;
+        }
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        .conic-border {
+            position: relative;
+            padding: 1px;
+            overflow: hidden;
+        }
+        .conic-border::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: conic-gradient(transparent, transparent, transparent, #00dbe9);
+            animation: rotate 4s linear infinite;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .conic-border:hover::before {
+            opacity: 1;
+        }
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+        .floating-orb {
+            position: absolute;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.3;
+        }
+        .typewriter::after {
+            content: '_';
+            animation: blink 0.8s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<div class="custom-cursor" id="cursor"></div>
+<!-- Background Orbs -->
+<div class="floating-orb w-96 h-96 bg-primary-fixed-dim top-[-10%] left-[-10%]"></div>
+<div class="floating-orb w-[500px] h-[500px] bg-secondary-container bottom-0 right-[-10%]"></div>
+<div class="floating-orb w-64 h-64 bg-on-tertiary-container top-[40%] right-[10%]"></div>
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface/40 backdrop-blur-xl border-b border-primary/20 flex justify-between items-center px-margin-desktop py-4 shadow-[0_0_20px_rgba(0,219,233,0.1)]">
+<div class="font-headline-md text-headline-md text-primary tracking-tighter">CRYPT_VPN</div>
+<div class="hidden md:flex gap-8">
+<a class="font-label-caps text-label-caps text-primary border-b-2 border-primary pb-1" href="#">NETWORK</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">ENCRYPTION</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">LOGS</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">NODES</a>
+</div>
+<button class="bg-primary-container text-on-primary px-6 py-2 font-label-caps text-label-caps rounded-lg hover:bg-primary/90 active:scale-95 transition-all duration-300">
+            GET ACCESS
+        </button>
+</nav>
+<!-- Hero Section -->
+<section class="min-h-screen pt-32 pb-20 px-margin-desktop max-w-container-max-width mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<div class="lg:col-span-7 space-y-8">
+<h1 class="font-headline-lg text-headline-lg lg:text-[80px] leading-tight">
+<span class="glitch-text block">ТВОЯ СВОБОДА</span>
+<span class="typewriter text-primary-fixed-dim font-body-lg" id="typewriter"></span>
+</h1>
+<p class="font-body-lg text-on-surface-variant max-w-xl">
+                Беспрецедентная анонимность через квантовое шифрование. Ваш цифровой след заканчивается здесь. Подключайтесь к глобальной сети узлов одним нажатием.
+            </p>
+<div class="flex flex-wrap gap-4">
+<button class="group relative px-8 py-4 bg-primary-fixed-dim text-on-primary font-label-caps text-label-caps rounded-xl overflow-hidden transition-all hover:shadow-[0_0_30px_rgba(0,219,233,0.4)]">
+<span class="relative z-10">ИНИЦИИРОВАТЬ СОЕДИНЕНИЕ</span>
+</button>
+<button class="px-8 py-4 glass-panel text-primary font-label-caps text-label-caps rounded-xl border border-primary/30 hover:bg-primary/10 transition-all">
+                    БЕЛАЯ КНИГА
+                </button>
+</div>
+</div>
+<div class="lg:col-span-5 space-y-6">
+<!-- System Status Card -->
+<div class="glass-panel p-6 rounded-xl relative overflow-hidden group">
+<div class="scan-line"></div>
+<div class="flex justify-between items-center mb-6">
+<span class="font-label-caps text-label-caps text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">shield</span>
+                        SYSTEM_STATUS
+                    </span>
+<span class="px-3 py-1 bg-primary/10 border border-primary/30 rounded-full font-label-caps text-[10px] text-primary-fixed-dim animate-pulse">
+                        ENCRYPTED
+                    </span>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<div class="font-body-sm text-on-surface-variant">Global Nodes</div>
+<div class="font-headline-md text-headline-md text-primary">1,402</div>
+</div>
+<div class="h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-fixed-dim w-3/4 shadow-[0_0_10px_#00dbe9]"></div>
+</div>
+<div class="flex justify-between items-end">
+<div class="font-body-sm text-on-surface-variant">Traffic Load</div>
+<div class="font-headline-md text-headline-md text-secondary">24.8%</div>
+</div>
+</div>
+</div>
+<!-- Terminal Log simulation -->
+<div class="bg-black/80 p-4 rounded-lg font-body-sm text-primary-fixed-dim border border-primary/10 h-48 overflow-hidden">
+<div class="space-y-1" id="terminal-logs">
+<div>&gt; INITIALIZING HANDSHAKE...</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Analytics Section -->
+<section class="py-24 px-margin-desktop max-w-container-max-width mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+<div class="glass-panel p-8 rounded-xl border-l-4 border-primary">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-2">ACTIVE DEVICES</div>
+<div class="font-headline-lg text-headline-lg text-primary">48,291</div>
+<div class="mt-4 flex items-center text-primary-fixed-dim font-body-sm">
+<span class="material-symbols-outlined mr-1">trending_up</span> +12% this month
+                </div>
+</div>
+<div class="glass-panel p-8 rounded-xl border-l-4 border-secondary">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-2">SERVER UPTIME</div>
+<div class="font-headline-lg text-headline-lg text-secondary">99.99%</div>
+<div class="mt-4 flex items-center text-secondary-fixed-dim font-body-sm">
+<span class="material-symbols-outlined mr-1">check_circle</span> SLA Guaranteed
+                </div>
+</div>
+<div class="glass-panel p-8 rounded-xl border-l-4 border-tertiary-fixed-dim">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-2">TRAFFIC PROCESSED</div>
+<div class="font-headline-lg text-headline-lg text-tertiary">8.4 PB</div>
+<div class="mt-4 flex items-center text-tertiary-fixed-dim font-body-sm">
+<span class="material-symbols-outlined mr-1">speed</span> Ultra-Low Latency
+                </div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<div class="glass-panel p-8 rounded-xl min-h-[400px] flex flex-col justify-between">
+<div>
+<h3 class="font-headline-md text-headline-md mb-2">LIVE LATENCY NETWORK</h3>
+<p class="font-body-sm text-on-surface-variant">Real-time ping across 50 global data centers.</p>
+</div>
+<div class="flex-grow flex items-end gap-1 mt-8 h-48">
+<!-- Fake Chart -->
+<script>
+                        document.write([...Array(30)].map((_, i) => `
+                            <div class="flex-grow bg-primary-fixed-dim/20 hover:bg-primary-fixed-dim transition-all duration-500 rounded-t" style="height: ${Math.random() * 80 + 20}%"></div>
+                        `).join(''));
+                    </script>
+</div>
+<div class="flex justify-between mt-4 font-label-caps text-[10px] text-on-surface-variant">
+<span>00:00</span>
+<span>GLOBAL_SYNC_ACTIVE</span>
+<span>NOW</span>
+</div>
+</div>
+<div class="glass-panel p-8 rounded-xl flex flex-col items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at center, #ff506e 1px, transparent 1px); background-size: 20px 20px;"></div>
+<h3 class="font-headline-md text-headline-md mb-8 z-10">THREAT NEUTRALIZATION</h3>
+<!-- Radar Mockup -->
+<div class="relative w-64 h-64 flex items-center justify-center">
+<div class="absolute inset-0 border border-secondary/30 rounded-full animate-ping"></div>
+<div class="absolute inset-4 border border-secondary/20 rounded-full"></div>
+<div class="absolute inset-12 border border-secondary/10 rounded-full"></div>
+<div class="w-2 h-2 bg-secondary rounded-full shadow-[0_0_20px_#ff506e]"></div>
+<div class="absolute top-10 left-10 w-4 h-4 glass-panel border border-secondary p-1 rounded-sm animate-pulse"></div>
+<div class="absolute bottom-16 right-12 w-4 h-4 glass-panel border border-primary p-1 rounded-sm animate-pulse"></div>
+</div>
+<div class="mt-8 grid grid-cols-2 gap-8 w-full z-10">
+<div class="text-center">
+<div class="font-body-sm text-secondary-container">DDoS ATTACKS</div>
+<div class="font-headline-md text-headline-md">1.2k / min</div>
+</div>
+<div class="text-center">
+<div class="font-body-sm text-primary-fixed-dim">DATA INTEGRITY</div>
+<div class="font-headline-md text-headline-md">100%</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Pricing Section -->
+<section class="py-24 px-margin-desktop bg-surface-container-low/50">
+<div class="max-w-container-max-width mx-auto">
+<div class="text-center mb-16">
+<h2 class="font-headline-lg text-headline-lg mb-4">ТАРИФНЫЕ ПЛАНЫ</h2>
+<p class="font-body-lg text-on-surface-variant">Выберите уровень доступа для ваших цифровых операций.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Basic -->
+<div class="conic-border rounded-xl">
+<div class="glass-panel h-full p-10 rounded-[inherit] flex flex-col">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-4">GHOST_MODE</div>
+<div class="flex items-baseline gap-2 mb-8">
+<span class="font-headline-lg text-headline-lg">$0</span>
+<span class="font-body-sm text-on-surface-variant">/ month</span>
+</div>
+<ul class="space-y-4 mb-10 flex-grow">
+<li class="flex items-center gap-3 font-body-sm"><span class="material-symbols-outlined text-primary text-sm">check</span> 3 Locations</li>
+<li class="flex items-center gap-3 font-body-sm"><span class="material-symbols-outlined text-primary text-sm">check</span> Standard Encryption</li>
+<li class="flex items-center gap-3 font-body-sm opacity-50"><span class="material-symbols-outlined text-sm">close</span> Dedicated IP</li>
+</ul>
+<button class="w-full py-4 border border-outline-variant font-label-caps text-label-caps hover:bg-surface-variant transition-colors">START PROTOCOL</button>
+</div>
+</div>
+<!-- Optimal (Best Seller) -->
+<div class="conic-border rounded-xl scale-105 shadow-[0_0_50px_rgba(255,80,110,0.15)] z-10">
+<div class="glass-panel h-full p-10 rounded-[inherit] border-secondary/40 flex flex-col relative overflow-hidden">
+<div class="absolute top-4 right-[-30px] bg-secondary-container text-on-secondary px-10 py-1 rotate-45 font-label-caps text-[10px]">BEST SELLER</div>
+<div class="font-label-caps text-label-caps text-secondary mb-4">PHANTOM_OPERATOR</div>
+<div class="flex items-baseline gap-2 mb-8">
+<span class="font-headline-lg text-headline-lg text-secondary">$12</span>
+<span class="font-body-sm text-on-surface-variant">/ month</span>
+</div>
+<ul class="space-y-4 mb-10 flex-grow">
+<li class="flex items-center gap-3 font-body-sm"><span class="material-symbols-outlined text-secondary text-sm">check</span> All 100+ Locations</li>
+<li class="flex items-center gap-3 font-body-sm"><span class="material-symbols-outlined text-secondary text-sm">check</span> Double Encryption (AES-512)</li>
+<li class="flex items-center gap-3 font-body-sm"><span class="material-symbols-outlined text-secondary text-sm">check</span> No-Log Guarantee</li>
+<li class="flex items-center gap-3 font-body-sm"><span class="material-symbols-outlined text-secondary text-sm">check</span> Kill Switch PRO</li>
+</ul>
+<button class="w-full py-4 bg-secondary-container text-on-secondary font-label-caps text-label-caps hover:shadow-[0_0_20px_#ff506e] transition-shadow">SECURE ACCESS</button>
+</div>
+</div>
+<!-- Enterprise -->
+<div class="conic-border rounded-xl">
+<div class="glass-panel h-full p-10 rounded-[inherit] flex flex-col">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-4">SHADOW_NET</div>
+<div class="flex items-baseline gap-2 mb-8">
+<span class="font-headline-lg text-headline-lg">$29</span>
+<span class="font-body-sm text-on-surface-variant">/ month</span>
+</div>
+<ul class="space-y-4 mb-10 flex-grow">
+<li class="flex items-center gap-3 font-body-sm"><span class="material-symbols-outlined text-primary text-sm">check</span> Dedicated Server</li>
+<li class="flex items-center gap-3 font-body-sm"><span class="material-symbols-outlined text-primary text-sm">check</span> Stealth Mode (Obfuscation)</li>
+<li class="flex items-center gap-3 font-body-sm"><span class="material-symbols-outlined text-primary text-sm">check</span> 24/7 Priority Ops Support</li>
+</ul>
+<button class="w-full py-4 border border-outline-variant font-label-caps text-label-caps hover:bg-surface-variant transition-colors">COMMAND CENTER</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest dark:bg-surface-container-lowest w-full py-12 border-t border-outline-variant">
+<div class="max-w-container-max-width mx-auto px-margin-desktop grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+<div>
+<div class="font-label-caps text-label-caps text-secondary mb-4 uppercase">CRYPT_VPN // ENCRYPTED_STREAMS_ACTIVE</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">© 2024 CRYPT_VPN // ALL PACKETS ENCRYPTED AT SOURCE</p>
+</div>
+<div class="flex flex-wrap gap-6 md:justify-end">
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-secondary-container transition-colors opacity-80 hover:opacity-100" href="#">SECURITY_AUDIT</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-secondary-container transition-colors opacity-80 hover:opacity-100" href="#">TERMINAL_API</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-secondary-container transition-colors opacity-80 hover:opacity-100" href="#">PRIVACY_PROTOCOL</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-secondary-container transition-colors opacity-80 hover:opacity-100" href="#">WARRANT_CANARY</a>
+</div>
+</div>
+</footer>
+<script>
+        // Custom Cursor Logic
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        document.querySelectorAll('button, a, .glass-panel').forEach(el => {
+            el.addEventListener('mouseenter', () => cursor.classList.add('expand'));
+            el.addEventListener('mouseleave', () => cursor.classList.remove('expand'));
+        });
+
+        // Typewriter Logic
+        const textElement = document.getElementById('typewriter');
+        const phrases = ["в мире цифр", "без границ", "под защитой", "в тени"];
+        let phraseIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+
+        function type() {
+            const currentPhrase = phrases[phraseIndex];
+            if (isDeleting) {
+                textElement.textContent = currentPhrase.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                textElement.textContent = currentPhrase.substring(0, charIndex + 1);
+                charIndex++;
+            }
+
+            let speed = isDeleting ? 50 : 150;
+            if (!isDeleting && charIndex === currentPhrase.length) {
+                speed = 2000;
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                phraseIndex = (phraseIndex + 1) % phrases.length;
+                speed = 500;
+            }
+
+            setTimeout(type, speed);
+        }
+        type();
+
+        // Terminal Logs Logic
+        const terminal = document.getElementById('terminal-logs');
+        const logLines = [
+            "ESTABLISHING ENCRYPTED TUNNEL...",
+            "HANDSHAKE PROTOCOL: ECDHE-RSA-AES256-GCM-SHA384",
+            "PACKET_CHECK: 100% SUCCESS",
+            "MAPPING VIRTUAL IP: 10.84.2.14",
+            "SECURE TUNNEL ACTIVE [STUTTGART_NODE_7]",
+            "ENCRYPTION_STRENGTH: QUANTUM_RESISTANT",
+            "CLEANING LOCAL TRACES...",
+            "WARRANT_CANARY_CHECK: VALID",
+            "LATENCY: 14ms",
+            "THREAT_LEVEL: ZERO"
+        ];
+        let logIndex = 0;
+
+        function addLog() {
+            const line = document.createElement('div');
+            line.textContent = `> ${logLines[logIndex]}`;
+            terminal.appendChild(line);
+            if (terminal.children.length > 8) {
+                terminal.removeChild(terminal.children[0]);
+            }
+            logIndex = (logIndex + 1) % logLines.length;
+            setTimeout(addLog, 1500 + Math.random() * 2000);
+        }
+        addLog();
+    </script>
+</body></html>
